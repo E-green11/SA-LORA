@@ -9,8 +9,7 @@ export CUDA_VISIBLE_DEVICES=6
 # Experiment configuration
 task=mnli
 exp_name=roberta_large_lora_$task
-lr=2e-4
-lr_ratio=5              # ###########################
+lr=2e-4           # ###########################
 use_sa_lora=true         # SA-LoRA switch
 sa_metric=stable_rank    # stable_rank | spectral_entropy | cond
 sa_min_mult=0.4
@@ -41,7 +40,6 @@ python src/run_glue.py \
   --logging_steps   \
   --num_train_epochs   \
   --learning_rate $lr \
-  --loraplus_lr_ratio $lr_ratio \
   $( [ "$use_sa_lora" = true ] && echo --use_sa_lora ) \
   --sa_metric $sa_metric \
   --sa_min_mult $sa_min_mult \
