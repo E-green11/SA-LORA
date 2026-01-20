@@ -51,7 +51,6 @@ python src/run_e2e.py \
   --num_train_epochs 8 \
   --learning_rate $lr \
   --optim adamw_torch \
-  --lr_scheduler_type 'linear' \
   --output_dir output/$exp_name/lr-${lr}_ratio-${lr_ratio} \
   --overwrite_output_dir \
   --save_total_limit 20 \
