@@ -31,7 +31,7 @@ loraplus_dir = os.path.abspath(os.path.join(current_dir, "..", ".."))
 
 # Append the 'loraplus' directory to sys.path
 sys.path.append(loraplus_dir)
-from lora_plus import LoraPlusTrainer
+from salora import saloraTrainer
 
 logger = logging.getLogger(__name__)
 
