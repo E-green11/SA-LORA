@@ -1,18 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-E2E NLG Benchmark Official Evaluation
-Uses pycocoevalcap to compute official metrics: BLEU, NIST, METEOR, ROUGE-L, CIDEr.
 
-Install dependencies:
-    pip install pycocoevalcap nltk
-
-Usage:
-    python eval_e2e_official.py \
-        --model_path output/gpt2-medium_lora_e2e_sa/lr-2e-4_ratio-25 \
-        --base_model_name gpt2-medium \
-        --test_file data/e2e_nlg/testset_w_refs.csv
-"""
 
 import argparse
 import json
