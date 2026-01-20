@@ -32,7 +32,7 @@ current_dir = os.path.dirname(__file__)
 loraplus_dir = os.path.abspath(os.path.join(current_dir, "..", ".."))
 sys.path.append(loraplus_dir)
 
-from lora_plus import LoraPlusTrainer
+from salora import saloraTrainer
 from arguments import TrainingArguments, ModelArguments, DataTrainingArguments
 
 logger = logging.getLogger(__name__)
@@ -302,7 +302,7 @@ def main():
     )
 
     # Initialize trainer
-    trainer = LoraPlusTrainer(
+    trainer = saloraTrainer(
         model=model,
         args=training_args,
         train_dataset=train_dataset if training_args.do_train else None,
