@@ -14,8 +14,6 @@ model_short=llama2_7b
 task=alpaca
 exp_name=${model_short}_sa_lora_${task}
 lr=2e-4
-lr_ratio=25
-
 # SA-LoRA configuration
 use_sa_lora=true
 sa_metric=stable_rank
@@ -39,7 +37,6 @@ python src/run_instruction_tuning.py \
   --target_modules "q_proj, k_proj, v_proj, o_proj, up_proj, down_proj, gate_proj" \
   --lora_rank 64 \
   --lora_alpha 64 \
-  --loraplus_lr_ratio $lr_ratio \
   $( [ "$use_sa_lora" = true ] && echo --use_sa_lora ) \
   --sa_metric $sa_metric \
   --sa_min_mult $sa_min_mult \
