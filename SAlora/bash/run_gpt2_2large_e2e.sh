@@ -11,7 +11,6 @@ model_name=gpt2-large
 task=e2e
 exp_name=${model_name}_lora_${task}_sa
 lr=2e-4
-lr_ratio=25
 use_sa_lora=true
 sa_metric=stable_rank
 sa_min_mult=0.4
@@ -27,7 +26,6 @@ python src/run_e2e.py \
   --train_file data/e2e_nlg/trainset.csv \
   --validation_file data/e2e_nlg/devset.csv \
   --use_lora \
-  --loraplus_lr_ratio $lr_ratio \
   --use_sa_lora \
   --sa_metric $sa_metric \
   --sa_min_mult $sa_min_mult \
