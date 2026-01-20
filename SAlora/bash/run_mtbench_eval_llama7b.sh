@@ -10,7 +10,7 @@ export WANDB_DISABLED=true
 BASE_MODEL=huggyllama/llama-7b
 
 # LoRA adapter path (trained model)
-LORA_PATH=output/llama_7b_sa_lora_alpaca/lr-2e-4_ratio-25
+LORA_PATH=output/llama_7b_sa_lora_alpaca
 
 # Run evaluation
 python mtbench/generate_answers.py \
