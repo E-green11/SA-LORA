@@ -8,7 +8,7 @@ GLUE_DIR=${GLUE_DIR:-"$(cd "$(dirname "$0")/.." && pwd)/glue"}
 cd "$GLUE_DIR"
 
 # ========== Configuration ==========
-MODEL_PATH="output/gpt2-medium_lora_e2e_sa/lr-2e-4_ratio-25"
+MODEL_PATH="output/gpt2-medium_lora_e2e_sa"
 BASE_MODEL="gpt2-medium"
 TEST_FILE="data/e2e_nlg/testset_w_refs.csv"
 
