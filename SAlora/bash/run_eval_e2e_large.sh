@@ -7,7 +7,7 @@ export CUDA_VISIBLE_DEVICES=4
 GLUE_DIR=${GLUE_DIR:-"$(cd "$(dirname "$0")/.." && pwd)/glue"}
 cd "$GLUE_DIR"
 
-MODEL_PATH="output/gpt2-large_lora_e2e_sa/lr-2e-4_ratio-25"
+MODEL_PATH="output/gpt2-large_lora_e2e_sa"
 BASE_MODEL="gpt2-large"
 TEST_FILE="data/e2e_nlg/testset_w_refs.csv"
 
