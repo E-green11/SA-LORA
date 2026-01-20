@@ -8,13 +8,6 @@ from constants import task_to_keys
 # Current file directory
 current_dir = os.path.dirname(__file__)
 
-# Calculate the path to the 'loraplus' directory
-loraplus_dir = os.path.abspath(os.path.join(current_dir, "..", ".."))
-
-# Append the 'loraplus' directory to sys.path
-sys.path.append(loraplus_dir)
-from lora_plus import LoraPlusTrainingArguments
-
 
 @dataclass
 class DataTrainingArguments:
