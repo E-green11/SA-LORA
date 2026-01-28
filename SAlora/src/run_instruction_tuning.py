@@ -1,7 +1,3 @@
-"""
-Instruction Tuning Script for LLaMA models with SA-LoRA
-Supports Alpaca dataset format for MT-Bench evaluation
-"""
 
 import logging
 import math
@@ -36,26 +32,6 @@ from salora import saloraTrainer
 from arguments import TrainingArguments, ModelArguments, DataTrainingArguments
 
 logger = logging.getLogger(__name__)
-
-# Alpaca prompt template
-ALPACA_PROMPT_TEMPLATE = """Below is an instruction that describes a task. Write a response that appropriately completes the request.
-
-### Instruction:
-{instruction}
-
-### Input:
-{input}
-
-### Response:
-{output}"""
-
-ALPACA_PROMPT_NO_INPUT = """Below is an instruction that describes a task. Write a response that appropriately completes the request.
-
-### Instruction:
-{instruction}
-
-### Response:
-{output}"""
 
 
 def main():
