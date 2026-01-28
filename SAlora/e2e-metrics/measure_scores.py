@@ -25,8 +25,6 @@ HEADER_REF = r'(trg|tgt|target|ref(?:erence)?|human(?:[_ .-](?:ref(?:erence)?))?
 
 
 def read_lines(file_name, multi_ref=False):
-    """Read one instance per line from a text file. In multi-ref mode, assumes multiple lines
-    (references) per instance & instances separated by empty lines."""
     buf = [[]] if multi_ref else []
     with codecs.open(file_name, 'rb', 'UTF-8') as fh:
         for line in fh:
@@ -116,8 +114,6 @@ def read_and_check_tsv(sys_file, src_file):
 
 
 def read_and_group_tsv(ref_file, sys_srcs):
-    """Read a TSV file with references (and MRs), group the references according to identical MRs
-    on consecutive lines."""
     ref_srcs, ref_sents = read_tsv(ref_file, HEADER_SRC, HEADER_REF)
     refs = []
     if any([inst != '' for inst in sys_srcs]):  # data file has real sources -- we reorder according to them
@@ -147,7 +143,6 @@ def write_tsv(fname, header, data):
 
 
 def create_coco_refs(data_ref):
-    """Create MS-COCO human references JSON."""
     out = {'info': {}, 'licenses': [], 'images': [], 'type': 'captions', 'annotations': []}
     ref_id = 0
     for inst_id, refs in enumerate(data_ref):
@@ -169,11 +164,6 @@ def create_coco_sys(data_sys):
 
 
 def create_mteval_file(refs, path, file_type):
-    """Given references/outputs, create a MTEval .sgm XML file.
-    @param refs: data to store in the file (human references/system outputs/dummy sources)
-    @param path: target path where the file will be stored
-    @param file_type: the indicated "set type" (ref/tst/src)
-    """
     # swap axes of multi-ref data (to 1st: different refs, 2nd: instances) & pad empty references
     data = [[]]
     for inst_no, inst in enumerate(refs):
@@ -228,7 +218,6 @@ def load_data(ref_file, sys_file, src_file=None):
 def evaluate(data_src, data_ref, data_sys,
              print_as_table=False, print_table_header=False, sys_fname='',
              python=False):
-    """Main procedure, running the MS-COCO & MTEval evaluators on the loaded data."""
 
     # run the MS-COCO evaluator
     coco_eval = run_coco_eval(data_ref, data_sys)
@@ -255,7 +244,6 @@ def evaluate(data_src, data_ref, data_sys,
 
 
 def run_mteval(data_ref, data_sys, data_src):
-    """Run document-level BLEU and NIST via mt-eval13b (Perl)."""
     # create temp directory
     temp_path = mkdtemp(prefix='e2e-eval-')
     print('Creating temp directory ', temp_path, file=sys.stderr)
@@ -291,8 +279,6 @@ def run_mteval(data_ref, data_sys, data_src):
 
 
 def run_pymteval(data_ref, data_sys):
-    """Run document-level BLEU and NIST in their Python implementation (should give the
-    same results as Perl)."""
     print('Running Py-MTEval metrics...', file=sys.stderr)
     bleu = BLEUScore()
     nist = NISTScore()
@@ -307,8 +293,6 @@ def run_pymteval(data_ref, data_sys):
 
 
 def run_coco_eval(data_ref, data_sys):
-    """Run the COCO evaluator, return the resulting evaluation object (contains both
-    system- and segment-level scores."""
     # convert references and system outputs to MS-COCO format in-memory
     coco_ref = create_coco_refs(data_ref)
     coco_sys = create_coco_sys(data_sys)
@@ -326,7 +310,6 @@ def run_coco_eval(data_ref, data_sys):
 
 
 def sent_level_scores(data_src, data_ref, data_sys, out_fname):
-    """Collect segment-level scores for the given data and write them out to a TSV file."""
     res_data = []
     headers = ['src', 'sys_out', 'BLEU', 'sentBLEU', 'NIST']
     coco_scorers = ['METEOR', 'ROUGE_L', 'CIDEr']
