@@ -3,50 +3,6 @@ from __future__ import print_function
 from builtins import range
 from builtins import object
 from past.utils import old_div
-__author__ = 'tylin'
-__version__ = '1.0.1'
-# Interface for accessing the Microsoft COCO dataset.
-
-# Microsoft COCO is a large image dataset designed for object detection,
-# segmentation, and caption generation. pycocotools is a Python API that
-# assists in loading, parsing and visualizing the annotations in COCO.
-# Please visit http://mscoco.org/ for more information on COCO, including
-# for the data, paper, and tutorials. The exact format of the annotations
-# is also described on the COCO website. For example usage of the pycocotools
-# please see pycocotools_demo.ipynb. In addition to this API, please download both
-# the COCO images and annotations in order to run the demo.
-
-# An alternative to using the API is to load the annotations directly
-# into Python dictionary
-# Using the API provides additional utility functions. Note that this API
-# supports both *instance* and *caption* annotations. In the case of
-# captions not all functions are defined (e.g. categories are undefined).
-
-# The following API functions are defined:
-#  COCO       - COCO api class that loads COCO annotation file and prepare data structures.
-#  decodeMask - Decode binary mask M encoded via run-length encoding.
-#  encodeMask - Encode binary mask M using run-length encoding.
-#  getAnnIds  - Get ann ids that satisfy given filter conditions.
-#  getCatIds  - Get cat ids that satisfy given filter conditions.
-#  getImgIds  - Get img ids that satisfy given filter conditions.
-#  loadAnns   - Load anns with the specified ids.
-#  loadCats   - Load cats with the specified ids.
-#  loadImgs   - Load imgs with the specified ids.
-#  segToMask  - Convert polygon segmentation to binary mask.
-#  showAnns   - Display the specified annotations.
-#  loadRes    - Load result file and create result api object.
-# Throughout the API "ann"=annotation, "cat"=category, and "img"=image.
-# Help on each functions can be accessed by: "help COCO>function".
-
-# See also COCO>decodeMask,
-# COCO>encodeMask, COCO>getAnnIds, COCO>getCatIds,
-# COCO>getImgIds, COCO>loadAnns, COCO>loadCats,
-# COCO>loadImgs, COCO>segToMask, COCO>showAnns
-
-# Microsoft COCO Toolbox.      Version 1.0
-# Data, paper, and tutorials available at:  http://mscoco.org/
-# Code written by Piotr Dollar and Tsung-Yi Lin, 2014.
-# Licensed under the Simplified BSD License [see bsd.txt]
 
 import json
 import datetime
@@ -61,12 +17,6 @@ import sys
 
 class COCO(object):
     def __init__(self, annotation_file=None):
-        """
-        Constructor of Microsoft COCO helper class for reading and visualizing annotations.
-        :param annotation_file (str): location of annotation file
-        :param image_folder (str): location to the folder that hosts images.
-        :return:
-        """
         # load dataset
         self.dataset = {}
         self.anns = []
@@ -115,22 +65,10 @@ class COCO(object):
         self.cats = cats
 
     def info(self):
-        """
-        Print information about the annotation file.
-        :return:
-        """
         for key, value in list(self.dataset['info'].items()):
             print('%s: %s'%(key, value), file=sys.stderr)
 
     def getAnnIds(self, imgIds=[], catIds=[], areaRng=[], iscrowd=None):
-        """
-        Get ann ids that satisfy given filter conditions. default skips that filter
-        :param imgIds  (int array)     : get anns for given imgs
-               catIds  (int array)     : get anns for given cats
-               areaRng (float array)   : get anns for given area range (e.g. [0 inf])
-               iscrowd (boolean)       : get anns for given crowd label (False or True)
-        :return: ids (int array)       : integer array of ann ids
-        """
         imgIds = imgIds if type(imgIds) == list else [imgIds]
         catIds = catIds if type(catIds) == list else [catIds]
 
@@ -153,13 +91,6 @@ class COCO(object):
         return ids
 
     def getCatIds(self, catNms=[], supNms=[], catIds=[]):
-        """
-        filtering parameters. default skips that filter.
-        :param catNms (str array)  : get cats for given cat names
-        :param supNms (str array)  : get cats for given supercategory names
-        :param catIds (int array)  : get cats for given cat ids
-        :return: ids (int array)   : integer array of cat ids
-        """
         catNms = catNms if type(catNms) == list else [catNms]
         supNms = supNms if type(supNms) == list else [supNms]
         catIds = catIds if type(catIds) == list else [catIds]
@@ -175,12 +106,6 @@ class COCO(object):
         return ids
 
     def getImgIds(self, imgIds=[], catIds=[]):
-        '''
-        Get img ids that satisfy given filter conditions.
-        :param imgIds (int array) : get imgs for given ids
-        :param catIds (int array) : get imgs with all given cats
-        :return: ids (int array)  : integer array of img ids
-        '''
         imgIds = imgIds if type(imgIds) == list else [imgIds]
         catIds = catIds if type(catIds) == list else [catIds]
 
@@ -196,22 +121,12 @@ class COCO(object):
         return list(ids)
 
     def loadAnns(self, ids=[]):
-        """
-        Load anns with the specified ids.
-        :param ids (int array)       : integer ids specifying anns
-        :return: anns (object array) : loaded ann objects
-        """
         if type(ids) == list:
             return [self.anns[id] for id in ids]
         elif type(ids) == int:
             return [self.anns[ids]]
 
     def loadCats(self, ids=[]):
-        """
-        Load cats with the specified ids.
-        :param ids (int array)       : integer ids specifying cats
-        :return: cats (object array) : loaded cat objects
-        """
         if type(ids) == list:
             return [self.cats[id] for id in ids]
         elif type(ids) == int:
@@ -229,11 +144,6 @@ class COCO(object):
             return [self.imgs[ids]]
 
     def showAnns(self, anns):
-        """
-        Display the specified annotations.
-        :param anns (array of object): annotations to display
-        :return: None
-        """
         if len(anns) == 0:
             return 0
         if self.dataset['type'] == 'instances':
@@ -266,12 +176,6 @@ class COCO(object):
                 print(ann['caption'], file=sys.stderr)
 
     def loadRes(self, resFile=None, resData=None):
-        """
-        Load result file and return a result api object.
-        :param   resFile (str)     : file name of result file
-        :param   resData (obj)     : pre-loaded result data
-        :return: res (obj)         : result api object
-        """
         assert resFile or resData, 'must be provided result data in a list or a path to result file'
         res = COCO()
         res.dataset['images'] = [img for img in self.dataset['images']]
@@ -319,11 +223,6 @@ class COCO(object):
 
     @staticmethod
     def decodeMask(R):
-        """
-        Decode binary mask M encoded via run-length encoding.
-        :param   R (object RLE)    : run-length encoding of binary mask
-        :return: M (bool 2D array) : decoded binary mask
-        """
         N = len(R['counts'])
         M = np.zeros( (R['size'][0]*R['size'][1], ))
         n = 0
@@ -338,11 +237,6 @@ class COCO(object):
 
     @staticmethod
     def encodeMask(M):
-        """
-        Encode binary mask M using run-length encoding.
-        :param   M (bool 2D array)  : binary mask to encode
-        :return: R (object RLE)     : run-length encoding of binary mask
-        """
         [h, w] = M.shape
         M = M.flatten(order='F')
         N = len(M)
@@ -366,13 +260,6 @@ class COCO(object):
 
     @staticmethod
     def segToMask( S, h, w ):
-         """
-         Convert polygon segmentation to binary mask.
-         :param   S (float array)   : polygon segmentation mask
-         :param   h (int)           : target mask height
-         :param   w (int)           : target mask width
-         :return: M (bool 2D array) : binary mask
-         """
          M = np.zeros((h,w), dtype=np.bool)
          for s in S:
              N = len(s)
