@@ -7,12 +7,6 @@ logger = logging.get_logger(__name__)
 
 
 def delete_checkpoint(checkpoint_dir):
-    """
-    Deletes a specified checkpoint directory.
-
-    Args:
-        checkpoint_dir: The path to the checkpoint directory to delete.
-    """
     try:
         logger.info(f"Deleting checkpoint {checkpoint_dir}")
         shutil.rmtree(checkpoint_dir)
@@ -22,13 +16,6 @@ def delete_checkpoint(checkpoint_dir):
 
 
 def cleanup_checkpoints(trainer, training_args):
-    """
-    Cleans up checkpoints based on training arguments.
-
-    Args:
-        trainer: The Hugging Face Trainer instance.
-        training_args: TrainingArguments used for training configuration.
-    """
     logger.info("Cleaning up checkpoints!")
     output_dir = training_args.output_dir
     checkpoints_sorted = trainer._sorted_checkpoints(
@@ -45,8 +32,6 @@ def cleanup_checkpoints(trainer, training_args):
         except FileNotFoundError:
             logger.warning(f"Directory {output_dir} does not exist.")
     elif training_args.keep_checkpoints == "eval":
-        # Delete individual checkpoints but preserve evaluation results
-        # Assumes checkpoints and evaluation results are stored separately
         for checkpoint in checkpoints_sorted:
             delete_checkpoint(checkpoint)
 
