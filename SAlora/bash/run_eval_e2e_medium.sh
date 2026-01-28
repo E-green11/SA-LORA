@@ -21,7 +21,7 @@ echo "=========================================="
 if [ ! -d "e2e-metrics" ]; then
     echo ""
     echo "[Step 1] Cloning official e2e-metrics..."
-    git clone https://github.com/tuetschek/e2e-metrics.git
+    
     cd e2e-metrics
     pip install -r requirements.txt
     pip install future
