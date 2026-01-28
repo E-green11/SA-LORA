@@ -32,7 +32,7 @@ sa_depth_prior_weight=0.1
 # Execute command
 python src/run_instruction_tuning.py \
   --model_name_or_path $model_name \
-  --dataset_name "yahma/alpaca-cleaned" \
+  --dataset_name "   " \
   --use_lora \
   --target_modules "q_proj, k_proj, v_proj, o_proj, up_proj, down_proj, gate_proj" \
   --lora_rank 64 \
@@ -51,16 +51,16 @@ python src/run_instruction_tuning.py \
   $( [ "$sa_depth_prior" = true ] && echo --sa_depth_prior ) \
   --sa_depth_prior_weight $sa_depth_prior_weight \
   --sa_grad_calibrate_steps 200 \
-  --sa_grad_power 1.5 \
-  --sa_grad_blend 0.2 \
+  --sa_grad_power   \
+  --sa_grad_blend   \
   --do_train \
   --do_eval \
   --bf16 \
   --gradient_checkpointing \
-  --max_seq_length 1024 \
-  --per_device_train_batch_size 16 \
-  --per_device_eval_batch_size 14 \
-  --gradient_accumulation_steps 8 \
+  --max_seq_length   \
+  --per_device_train_batch_size    \
+  --per_device_eval_batch_size   \
+  --gradient_accumulation_steps   \
   --num_train_epochs 3 \
   --learning_rate $lr \
   --optim adamw_torch \
