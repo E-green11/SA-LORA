@@ -22,14 +22,10 @@ from transformers import (AutoConfig, AutoModelForSequenceClassification,
                           PretrainedConfig, default_data_collator, set_seed)
 from transformers.trainer_utils import get_last_checkpoint
 from transformers.utils import send_example_telemetry
-
-# Current file directory
 current_dir = os.path.dirname(__file__)
 
-# Calculate the path to the 'loraplus' directory
 loraplus_dir = os.path.abspath(os.path.join(current_dir, "..", ".."))
 
-# Append the 'loraplus' directory to sys.path
 sys.path.append(loraplus_dir)
 from salora import saloraTrainer
 
@@ -37,24 +33,17 @@ logger = logging.getLogger(__name__)
 
 
 def main():
-    # See all possible arguments in src/transformers/training_args.py
-    # or by passing the --help flag to this script.
-    # We now keep distinct sets of args, for a cleaner separation of concerns.
-
     parser = HfArgumentParser(
         (ModelArguments, DataTrainingArguments, TrainingArguments)
     )
     if len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
-        # If we pass only one argument to the script and it's the path to a json file,
-        # let's parse it to get our arguments.
+    
         model_args, data_args, training_args = parser.parse_json_file(
             json_file=os.path.abspath(sys.argv[1])
         )
     else:
         model_args, data_args, training_args = parser.parse_args_into_dataclasses()
 
-    # Sending telemetry. Tracking the example usage helps us better allocate resources to maintain them. The
-    # information sent is the one passed as arguments along with your Python/PyTorch versions.
     send_example_telemetry("run_glue", model_args, data_args)
 
     logging.basicConfig(
@@ -94,19 +83,6 @@ def main():
 
     # Set seed before initializing model.
     set_seed(training_args.seed)
-
-    # Get the datasets: you can either provide your own CSV/JSON training and evaluation files (see below)
-    # or specify a GLUE benchmark task (the dataset will be downloaded automatically from the datasets Hub).
-    #
-    # For CSV/JSON files, this script will use as labels the column called 'label' and as pair of sentences the
-    # sentences in columns called 'sentence1' and 'sentence2' if such column exists or the first two columns not named
-    # label if at least two columns are provided.
-    #
-    # If the CSVs/JSONs contain only one non-label column, the script does single sentence classification on this
-    # single column. You can easily tweak this behavior (see below)
-    #
-    # In distributed training, the load_dataset function guarantee that only one local process can concurrently
-    # download the dataset.
     if data_args.task_name is not None:
         # Downloading and loading a dataset from the hub.
         if data_args.use_local:
@@ -171,10 +147,6 @@ def main():
                 cache_dir=model_args.cache_dir,
                 token=True if model_args.token else None,
             )
-    # See more about loading any type of standard or custom dataset at
-    # https://huggingface.co/docs/datasets/loading_datasets.html.
-
-    # Labels
     if data_args.task_name is not None:
         is_regression = data_args.task_name == "stsb"
         if not is_regression:
@@ -191,15 +163,9 @@ def main():
         if is_regression:
             num_labels = 1
         else:
-            # A useful fast method:
-            # https://huggingface.co/docs/datasets/package_reference/main_classes.html#datasets.Dataset.unique
-            label_list = raw_datasets["train"].unique("label")
             label_list.sort()  # Let's sort it for determinism
             num_labels = len(label_list)
 
-    # Load pretrained model and tokenizer
-    # In distributed training, the .from_pretrained methods guarantee that only one local process can concurrently
-    # download model & vocab.
     config = AutoConfig.from_pretrained(
         (
             model_args.config_name
@@ -252,11 +218,6 @@ def main():
                 tokenizer=tokenizer,
                 model=model,
             )
-
-        # LLaMA tokenizer may not have correct special tokens set.
-        # Check and add them if missing to prevent them from being parsed into different tokens.
-        # Note that these are present in the vocabulary.
-        # Note also that `model.config.pad_token_id` is None, `<unk>` token is id 0.
         logger.info("Adding special tokens.")
         tokenizer.add_special_tokens(
             {
@@ -322,15 +283,12 @@ def main():
     else:
         # We will pad later, dynamically at batch creation, to the max sequence length in each batch
         padding = False
-
-    # Some models have set the order of the labels to use, so let's make sure we do use it.
     label_to_id = None
     if (
         model.config.label2id != PretrainedConfig(num_labels=num_labels).label2id
         and data_args.task_name is not None
         and not is_regression
     ):
-        # Some have all caps in their config, some don't.
         label_name_to_id = {k.lower(): v for k, v in model.config.label2id.items()}
         if sorted(label_name_to_id.keys()) == sorted(label_list):
             label_to_id = {
@@ -432,9 +390,6 @@ def main():
         metric = evaluate.load("glue", data_args.task_name)
     else:
         metric = evaluate.load("accuracy")
-
-    # You can define your custom compute_metrics function. It takes an `EvalPrediction` object (a namedtuple with a
-    # predictions and label_ids field) and has to return a dictionary string to float.
     def compute_metrics(p: EvalPrediction):
         preds = p.predictions[0] if isinstance(p.predictions, tuple) else p.predictions
         preds = np.squeeze(preds) if is_regression else np.argmax(preds, axis=1)
@@ -447,9 +402,6 @@ def main():
             return {"mse": ((preds - p.label_ids) ** 2).mean().item()}
         else:
             return {"accuracy": (preds == p.label_ids).astype(np.float32).mean().item()}
-
-    # Data collator will default to DataCollatorWithPadding when the tokenizer is passed to Trainer, so we change it if
-    # we already did the padding.
     if data_args.pad_to_max_length:
         data_collator = default_data_collator
     elif training_args.fp16:
