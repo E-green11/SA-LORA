@@ -26,20 +26,14 @@ from transformers import (
 )
 from transformers.trainer_utils import get_last_checkpoint
 
-# Import LoraPlus components
-# This script assumes it is run from glue/scripts/ while run_e2e.py is located in glue/src/
-# lora_plus.py is located two levels up (project root)
 current_dir = os.path.dirname(__file__)
 loraplus_dir = os.path.abspath(os.path.join(current_dir, "..", ".."))
 sys.path.append(loraplus_dir)
 
 from lora_plus import LoraPlusTrainer
-# Import TrainingArguments from local arguments.py which inherits from LoraPlusTrainingArguments and adds LoRA specific args
 from arguments import TrainingArguments, ModelArguments, DataTrainingArguments
 
 logger = logging.getLogger(__name__)
-
-# Remove duplicate definitions of ModelArguments and DataTrainingArguments as we import them now
 
 def main():
     parser = HfArgumentParser((ModelArguments, DataTrainingArguments, TrainingArguments))
@@ -140,16 +134,6 @@ def main():
     # Setup LoRA
     if hasattr(training_args, "use_lora") and training_args.use_lora:
         target_modules = ["c_attn"] # Default for GPT-2
-        # If specific target modules are provided in args (need to check LoraPlusTrainingArguments definition)
-        # It seems LoraPlusTrainingArguments inherits from TrainingArguments, which doesn't have target_modules by default in transformers
-        # BUT, run_glue.py assumes training_args has target_modules. 
-        # Let's assume we pass it via some way or manually handle it here if it's not in LoraPlusTrainingArguments.
-        # Actually LoraPlusTrainingArguments in lora_plus.py doesn't explicitly define target_modules, 
-        # so it must be added dynamically or via the base TrainingArguments if updated.
-        # For safety, we'll parse it manually if needed, or trust HfArgumentParser to pick up extra args if defined.
-        
-        # Checking how run_glue.py does it: training_args.target_modules
-        # We will assume it's available or we use default.
         if hasattr(training_args, "target_modules") and training_args.target_modules:
              if isinstance(training_args.target_modules, str):
                 target_modules = [t.strip() for t in training_args.target_modules.split(",")]
@@ -177,9 +161,6 @@ def main():
         ref_col = "human_reference"
 
     def preprocess_function(examples):
-        # E2E formatting: "MR <|endoftext|> REF <|endoftext|>"
-        # Or for conditional generation: "MR \n REF"
-        # Standard GPT-2 approach: concat input and target.
         
         inputs = examples[mr_col]
         targets = examples[ref_col]
@@ -201,11 +182,6 @@ def main():
         
         # For Causal LM, labels are same as input_ids
         tokenized["labels"] = tokenized["input_ids"].copy()
-        
-        # Mask out the loss for the input part (optional, but good for performance)
-        # Here we just do standard CLM training on the whole sequence for simplicity
-        # To be more precise, we could set labels to -100 for the MR part.
-        
         return tokenized
 
     if training_args.do_train:
