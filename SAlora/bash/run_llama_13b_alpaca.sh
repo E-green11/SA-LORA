@@ -32,7 +32,7 @@ sa_depth_prior_weight=0.1
 # Execute command
 python src/run_instruction_tuning.py \
   --model_name_or_path $model_name \
-  --dataset_name "yahma/alpaca-cleaned" \
+  --dataset_name " " \
   --use_lora \
   --target_modules "q_proj, k_proj, v_proj, o_proj, up_proj, down_proj, gate_proj" \
   --lora_rank 64 \
