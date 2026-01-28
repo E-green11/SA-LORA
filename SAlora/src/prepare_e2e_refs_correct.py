@@ -1,11 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Prepare a correctly formatted reference file for e2e-metrics.
 
-Format:
-  - One reference per line.
-  - Separate different MRs with a blank line.
-"""
 import argparse
 import csv
 from collections import OrderedDict
