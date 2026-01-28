@@ -14,15 +14,10 @@ from transformers.trainer import (EvalPrediction, PreTrainedModel,
                                   PreTrainedTokenizerBase, TrainerCallback)
 from transformers.trainer_pt_utils import get_parameter_names
 from transformers.utils import is_sagemaker_mp_enabled, logging
-
-# --- DyLoRA START ---
-# DyLoRA: additional imports
 from typing import Callable, Dict, List, Optional, Tuple, Union, Any
-# --- DyLoRA END ---
-
 from dataclasses import dataclass, field
 from functools import reduce
-# from typing import Callable, Dict, List, Optional, Tuple, Union # original imports replaced above
+
 
 import torch
 import torch.nn as nn
@@ -115,9 +110,6 @@ class SAloraTrainingArguments(TrainingArguments):
         metadata={"help": "Weight in [0,1] for depth prior when blending with spectral/grad multipliers."},
     )
     # --- SA-LoRA END ---
-    
-    # --- DyLoRA START ---
-    # Add DyLoRA-related training arguments
     use_dylora: bool = field(
         default=False,
         metadata={"help": "Whether to use Dynamic LoRA+ (DyLoRA). Overrides loraplus_lr_ratio if True."}
@@ -138,7 +130,6 @@ class SAloraTrainingArguments(TrainingArguments):
         default=1,
         metadata={"help": "Update the dynamic ratio every N optimization steps."}
     )
-    # --- DyLoRA END ---
 
 
 def get_module(name, opt_model):
@@ -163,17 +154,11 @@ def create_SAlora_optimizer(
     optimizer_kwargs,
     loraplus_lr_ratio,
     loraplus_lr_embedding=None,
-    # --- DyLoRA START ---
-    # Add an optional parameter to accept the trainer instance
     trainer_instance: Optional[Trainer] = None,
-    # --- DyLoRA END ---
 ): 
-    # --- DyLoRA START ---
-    # When using DyLoRA, loraplus_lr_ratio may be dynamic; only assert when not using DyLoRA
+    
     if not (trainer_instance and trainer_instance.args.use_dylora):
         assert loraplus_lr_ratio is not None, "loraplus_lr_ratio must be provided when not using DyLoRA."
-    # --- DyLoRA END ---
-
     if loraplus_lr_embedding is None:
         loraplus_lr_embedding = 1e-6
 
@@ -186,8 +171,6 @@ def create_SAlora_optimizer(
         "embedding": {},
     }
 
-    # --- SA-LoRA START ---
-    # Compute spectral score per LoRA target module and generate per-module LR multipliers
     def _module_key_from_param_name(param_name: str) -> str:
         parts = param_name.split(".")
         if "lora_A" in parts:
@@ -291,21 +274,14 @@ def create_SAlora_optimizer(
             else:
                 param_groups["groupA"][name] = param
             
-    # --- DyLoRA START ---
-    # If DyLoRA is enabled, store parameter lists on the trainer instance
+   
     if trainer_instance is not None and trainer_instance.args.use_dylora:
         logger.info("DyLoRA is enabled. Storing parameter groups.")
-        # store lists of parameters, not dicts
+       
         trainer_instance.dylora_groupA_params = list(param_groups["groupA"].values())
         trainer_instance.dylora_groupB_params = list(param_groups["groupB"].values()) + list(param_groups["groupB_no_decay"].values())
-        
-        # Record indices of B groups in the optimizer to update later (populated after creating param groups)
         trainer_instance.dylora_groupB_indices = []
         trainer_instance.dylora_B_to_A_index = {}
- 
-  
-    # --- DyLoRA END ---
-
     assigned_param_groups = ""
     for group in param_groups:
         assigned_param_groups += f"{group}\n {list(param_groups[group].keys())}\n\n"
@@ -537,28 +513,25 @@ class SAloraTrainer(Trainer):
             Callable[[torch.Tensor, torch.Tensor], torch.Tensor]
         ] = None,
     ): 
-        # --- DyLoRA START ---
-        # Initialize DyLoRA state
+        
         if self.args.use_dylora:
-            # Start from dylora_min_lr_ratio instead of 1.0
+          
             self.dylora_current_lr_ratio = self.args.dylora_min_lr_ratio
             self.dylora_groupA_params = []
             self.dylora_groupB_params = []
             self.dylora_groupB_indices = []
             logger.info(f"DyLoRA enabled. Initial ratio set to {self.dylora_current_lr_ratio}")
-        # --- DyLoRA END ---
+       
 
     def create_optimizer(self):
-        # --- DyLoRA START ---
-        # Modify condition to include use_dylora
+       
         opt_model = self.model_wrapped if is_sagemaker_mp_enabled() else self.model
         if self.optimizer is None:
             optimizer_cls, optimizer_kwargs = Trainer.get_optimizer_cls_and_kwargs(
                 self.args
             )
  
-            # --- DyLoRA END ---
-            
+    
             loraplus_lr_embedding = getattr(self.args, "loraplus_lr_embedding", None)
             
             self.optimizer = create_loraplus_optimizer(
@@ -566,10 +539,9 @@ class SAloraTrainer(Trainer):
                 optimizer_cls,
                 optimizer_kwargs,
                 loraplus_lr_embedding,
-                # --- DyLoRA START ---
-                # Pass trainer instance to store parameter groups
+               
                 trainer_instance=self,
-                # --- DyLoRA END ---
+              
             )
 
         if is_sagemaker_mp_enabled():
@@ -577,34 +549,26 @@ class SAloraTrainer(Trainer):
 
         return self.optimizer
 
-    # --- DyLoRA START ---
-    # Override training_step to inject dynamic ratio computation.
-    # This implementation is compatible with the rest of the codebase.
     def training_step(self, model: nn.Module, inputs: Dict[str, Union[torch.Tensor, Any]]) -> torch.Tensor:
         model.train()
         inputs = self._prepare_inputs(inputs)
         with self.compute_loss_context_manager():
             loss = self.compute_loss(model, inputs)
         if self.args.n_gpu > 1:
-            loss = loss.mean()  # mean() to average on multi-gpu parallel training
-        # Use Accelerate backward (if available) to avoid conflicts with its GradScaler
+            loss = loss.mean()  
         if getattr(self, "accelerator", None) is not None:
             self.accelerator.backward(loss)
         elif self.args.deepspeed:
             loss = self.deepspeed.backward(loss)
         else:
             loss.backward()
-        # --- DyLoRA injection logic ---
-        # Execute after backward() and before step().
-        # Note: self.state.global_step increments after step(), so use (self.state.global_step + 1)
+     
         if self.args.use_dylora and (self.state.global_step + 1) % self.args.dylora_update_every == 0:
             with torch.no_grad():
-                # 1. Compute gradient norms for A and B groups
-                # Create tensors on loss.device
+             
                 norm_A = torch.tensor(0.0, device=loss.device)
                 for p in self.dylora_groupA_params:
                     if p.grad is not None:
-                        # Use pow(2).sum() instead of norm()**2 for efficiency
                         norm_A += p.grad.detach().pow(2).sum()
                 norm_A = torch.sqrt(norm_A)
 
@@ -614,30 +578,25 @@ class SAloraTrainer(Trainer):
                         norm_B += p.grad.detach().pow(2).sum()
                 norm_B = torch.sqrt(norm_B)
 
-            # 2. Compute updated ratio
+           
             if norm_B > 1e-8:  # avoid division by zero
                 current_ratio = (norm_A / norm_B).item()
-                
-                # 3. Apply EMA smoothing
+               
                 self.dylora_current_lr  = (
                     self.args.dylora_beta * self.dylora_current_lr 
                     + (1 - self.args.dylora_beta) * current_ratio
                 )
-                
-                # 4. Clip ratio
+              
                 self.dylora_current_lr_ratio = max(
                     self.args.dylora_min_lr ,
                     min(self.dylora_current_lr , self.args.dylora_max_lr )
                 )
-
-            # 5. Update B-group learning rates in the optimizer. When using SA-LoRA, each B group maps to its A group index
             for idx in self.dylora_groupB_indices:
                 a_idx = getattr(self, 'dylora_B_to_A_index', {}).get(idx, 0)
                 base_lr = self.optimizer.param_groups[a_idx]['lr']
                 new_lr_B = base_lr * self.dylora_current_lr_ratio
                 self.optimizer.param_groups[idx]['lr'] = new_lr_B
-            
-            # 7. Log DyLoRA metrics
+          
             if self.args.logging_steps > 0 and (self.state.global_step + 1) % self.args.logging_steps == 0:
                     self.log({
                         "train/dylora_lr ": self.dylora_current_lr ,
@@ -645,10 +604,7 @@ class SAloraTrainer(Trainer):
                         "train/dylora_norm_A": norm_A.item(),
                         "train/dylora_norm_B": norm_B.item()
                     })
-        # --- DyLoRA injection end ---
-
-        # SA-LoRA: gradient calibration and warmup
-        # 1) Grad-based calibration: accumulate per-module A/B gradient energy for first N steps
+     
         if getattr(self.args, 'sa_grad_calibrate_steps', 0) > 0 and (self.state.global_step + 1) <= self.args.sa_grad_calibrate_steps:
             with torch.no_grad():
                 for a_idx in getattr(self, 'sa_a_group_indices', []):
@@ -795,6 +751,5 @@ class SAloraTrainer(Trainer):
                     ratio = self.dylora_current_lr_ratio if getattr(self.args, 'use_dylora', False) else (getattr(self.args, 'loraplus_lr_ratio', 1.0) or 1.0)
                     self.optimizer.param_groups[b_idx]['lr'] = base_lr * ratio
 
-        # Do not perform optimizer.step()/scheduler.step() here; the Trainer training loop handles those
+  
         return loss.detach() / self.args.gradient_accumulation_steps
-    # --- DyLoRA END ---
