@@ -1,10 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-Prepare reference files for official e2e-metrics evaluation.
-Format: one reference per line, multiple references for same MR on consecutive lines.
-"""
-
 import argparse
 import csv
 from collections import OrderedDict
@@ -28,8 +23,6 @@ def main():
                 mr_to_refs[mr] = []
             mr_to_refs[mr].append(ref)
     
-    # Write references - for each MR, write all refs on separate lines
-    # e2e-metrics expects: each line is a reference, grouped by MR
     with open(args.output_file, 'w', encoding='utf-8') as f:
         for mr, refs in mr_to_refs.items():
             for ref in refs:
